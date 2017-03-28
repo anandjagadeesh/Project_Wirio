@@ -11,6 +11,7 @@ class HotspotFinder():
 		self.hslist=[]
 		self.makelist()
 		self.findhs()
+		self.ploths()
 	def makelist(self):
 		self.l1=glob.glob('./RecordedData/user*.txt')
 		for i in self.l1:
@@ -33,6 +34,7 @@ class HotspotFinder():
 						flag=1
 				if flag==0:
 					self.hslist.append([j[1],j[2],1])
+	def ploths(self):
 		x=[]
 		y=[]
 		t=[]
