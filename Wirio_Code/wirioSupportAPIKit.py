@@ -57,29 +57,27 @@ def findresolution():
 	return str(resolution.width)+"x"+str(resolution.height)
 
 ######################################################################
-# HOTSPOT PLOTTER                                                    #
+# HOTSPOT DETECTOR AND PLOTTER                                       #
 ######################################################################
-class HotspotFinder():
+class HotspotDataAcquire():
 	def __init__(self):
 		self.hslist=[]
 	#------- FIND HOTSPOTS FOR CURRENT USER WHO IS LOGGED IN IF DATA PRESENT -------#
-	def findHotspots(self,path,uname):
-		if uname in os.getusername():
-			self.l1=glob.glob(path+os.getusername()+"*.wirdata")
-			for i in self.l1:
-				with open(path+i,'rb') as file1:
-					fileval=pickle.load(file1)
-				coordlist=fileval[1:]
-				for j in coordlist:
-					flag=0
-					for k in self.hslist:
-						if k[0]==j[1] and k[1]==j[2]:
-							k[2]=k[2]+1
-							flag=1
-					if flag==0:
-						self.hslist.append([j[1],j[2],1])
+	def recordHotspots(self):
+		self.l1=glob.glob('./data/'+os.getusername()+"*.wirdata")
+		for i in self.l1:
+			with open(path+i,'rb') as file1:
+				fileval=pickle.load(file1)
+			coordlist=fileval[1:]
+			for j in coordlist:
+				flag=0
+				for k in self.hslist:
+					if k[0]==j[1] and k[1]==j[2]:
+						k[2]=k[2]+1
+						flag=1
+				if flag==0:
+					self.hslist.append([j[1],j[2],1])
 	#------- PLOT HOTSPOTS FOR CURRENT USER WHO IS LOGGED IN IF DATA PRESENT -------#
-	def ploths(self,plotpath,datapath):
 		x=[]
 		y=[]
 		t=[]
@@ -98,11 +96,11 @@ class HotspotFinder():
 		fig = plt.figure()
 		plt.gca().invert_yaxis()
 		plt.scatter(x,y,c=t)
-		fig.suptitle("Hotspots_User_Plot")
+		fig.suptitle("Hotspots | User")
 		plt.ylabel('Pels on Y')
 		plt.xlabel('Pels on X')
-		fig.savefig(plotpath+"Hotspots_User_Plot.jpg")
-		plt.show()
+		fig.savefig("./plot/Hotspots_User_Plot.jpg")
+		#plt.show()
 		x=[]
 		y=[]
 		t=[]
@@ -117,18 +115,18 @@ class HotspotFinder():
 		fig.suptitle("Hotspots_User_Plot_Maximum_Spots")
 		plt.ylabel('Pels on Y')
 		plt.xlabel('Pels on X')
-		fig.savefig(plotpath+"Hotspots_User_Plot_Maximum_Spots.jpg")
-		plt.show()
-		with open(datapath+"Hotspots_User_MaxSpots.wirdata",'wb') as files:
+		fig.savefig("./plot/Hotspots_User_Plot_Maximum_Spots.jpg")
+		#plt.show()
+		with open("./data/Hotspots_User_MaxSpots.wirdata",'wb') as files:
 			pickle.dump(self.hslist[:15],files)
-		with open(datapath+"Hotspots_User.wirdata",'wb') as files:
+		with open("./data/Hotspots_User.wirdata",'wb') as files:
 			pickle.dump(self.hslist,files)
 
 ######################################################################
 # SIMPLE PATH PLOTTER FOR PELS MOVED ON SCREEN                       #
 ######################################################################
-def plotPathsOnScreen(datapath,plotpath):
-	with open (path,'rb') as files:
+def plotPathsOnScreen(filename):
+	with open ('./data/'+filename,'rb') as files:
 		fileval=pickle.load(files)
 		coordlist=fileval[1][1:]
 		xcoord=[]
@@ -142,7 +140,41 @@ def plotPathsOnScreen(datapath,plotpath):
 		plt.plot(xcoord,ycoord)
 		plt.ylabel('Pels on Y axis')
 		plt.xlabel('Pels on X axis')
-		fig.savefig(plotpath)
-		plt.show()
+		fig.savefig('./plot/'+filename.split(".")[0]+'.jpg')
+		#plt.show()
 
+######################################################################
+# MOUSE TRACKING AND RECORDING WITH USERNAME AUTO-CHECK              #
+######################################################################
+class MouseDataAcquire():
+	def __init__(self):
+		self.points=0
+		self.list1=[]
+		self.login_name=''
+		self.starttime=''
+	def move(self,x,y):
+		self.list1.append([0,x,y])
+		#print "Mouse at: "+str(x)+" "+str(y) # UNCOMMENT TO PRINT MOUSE POSITION
+	def click(self,x,y,button,pressed):
+		if pressed:
+			self.list1.append([1,x,y])
+			#print "Mouse pressed at: "+str(x)+" "+str(y) # UNCOMMENT TO PRINT MOUSE CLICK POSITION
+			if x==0 and y==0:
+				option=int(raw_input("Enter 1 to continue, 0 to exit: "))
+				if option==0:
+					with open("./data/"+self.login_name+" ["+self.starttime+"].wirdata",'wb') as files:
+						pickle.dump(self.list1,files)
+					return False
+	def mainfunct(self):
+		print 'Select the type of user to proceed so that the training data is correctly acquired\n'
+		self.login_name=str(raw_input("Enter \'user\' for current user and \'impostor\' for impostor: "))
+		if 'user' in self.login_name:
+			self.login_name=os.getusername()
+		self.starttime=time.ctime()
+		self.list1.append([self.login_name,self.starttime,'mouse'])
+		with mouse.Listener(on_move=self.move,on_click=self.click) as listener:
+			listener.join()
 
+######################################################################
+# END OF PROGRAM                                                     #
+######################################################################
