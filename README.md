@@ -1,4 +1,4 @@
-# Project_Wirio
+Wirio
 
 This project is in a development phase and yet to be synced from a private repository. Please don't clone or download as this repository as it might contain the initial incomplete data.
 
